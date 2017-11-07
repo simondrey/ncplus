@@ -8,8 +8,7 @@ require 'json'
 
 module NCPlus
 	class Show
-		attr_accessor :id, :title, :time, :length,
-			:unknown_2, :unknown_3, :age_limit, :year
+		attr_accessor :id, :title, :time, :length, :unknown_2, :unknown_3, :age_limit, :year
 	
 		def initialize(s)
 			@id = s[0]
