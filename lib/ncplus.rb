@@ -13,10 +13,10 @@ module NCPlus
     def initialize(s)
       @id = s[0]
       @title = s[1]
-      @time = Time.at(show[2])# time of air show
+      @time = Time.at(s[2])# time of air show
       @length = s[3]# in seconds
       @unknown_2 = s[4]# always zero?
-      @unknown_3 = s[5]# time of end?
+      @unknown_3 = s[5]# some kind of unique ncplus-id
       @age_limit = s[6]
       @year = s[7]
     end
@@ -31,7 +31,6 @@ module NCPlus
         open("http://ncplus.pl/program-tv?rm=ajax&id=#{show_id}&v=5").read
       )
     end
-        
   end
   
   class Epg
@@ -73,10 +72,8 @@ module NCPlus
       year, month, day = date[0..3], date[5..6], date[8..9]
       puts("Channel: #{channel} Year: #{year} Month: #{month} Day: #{day}") 
     end
-    
 
-    
-    # Return details about a given show
+    # Return Object with details about a given show
     def details(show)
       Show.new(show)
     end
