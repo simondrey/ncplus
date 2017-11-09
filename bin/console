@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+
+#require "bundler/setup"
+load "./lib/ncplus.rb"
+
+$epg = NCPlus::Epg.new
+STDOUT << "(initialized) $epg = NCPlus::Epg.new\n"
+
+require "irb"
+IRB.start(__FILE__)
+
