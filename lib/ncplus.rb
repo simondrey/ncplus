@@ -21,56 +21,83 @@ module NCPlus
       @year = s[7]
     end
     
-    def more
-      @more ||= program_info(@id)
-    end
-    
-    # Return full info about the show
+    # Returns full info for the show with a given show_id
     def program_info(show_id)
       JSON.parse(
         open("http://ncplus.pl/program-tv?rm=ajax&id=#{show_id}&v=5").read
       )
     end
+    
+    def more
+      @more ||= program_info(@id)
+    end
+    
+    alias details more
+    alias full_info more
+    alias description more
+  end
+  
+  class Channel
+    def initialize(epg_obj, chname, date)
+      @name = chname
+      @shows_cache = Hash.new([])
+      chia = epg_obj.channel_initializer_array(channel: chname, date: date)
+      chia[3].each do |show|
+        @shows_cache[date] << Show.new(show)
+      end
+    end
+    
+    def shows(date)
+      @shows_cache[date]
+    end
   end
   
   class Epg
-    def initialize()
+    def initialize
       @ncplus_url = 'http://ncplus.pl/epgjson/'
       
-      @epg = {}
+      @epg_cache = {}
       @today = Time.now.strftime("%Y-%m-%d")
-      @epg[@today] = JSON.parse(open(@ncplus_url + @today + '.ejson').read)
+      @epg_cache[@today] = JSON.parse(open(@ncplus_url + @today + '.ejson').read)
     end
     
-    # ------------------------------------------------------------------
-    # Return EPG for a given date and store it in @epg
-    # ------------------------------------------------------------------
+    def deep_initialize
+      # initialize all shows ... not sure if it make sense
+    end
+    
     def epg(year, month, day, refresh=false)
+      date = "#{year}-#{month}-#{day}"
       if refresh 
-        @epg[date.to_s] = JSON.parse(
+        @epg_cache[date.to_s] = JSON.parse(
           open(@ncplus_url + "#{year}-#{month}-#{day}.ejson").read
         )
       else
-        @epg[date.to_s] ||= JSON.parse(
+        @epg_cache[date.to_s] ||= JSON.parse(
           open(@ncplus_url + "#{year}-#{month}-#{day}.ejson").read
         )
       end
     end
     
     def today
-      @epg[@today]
+      @epg_cache[@today]
     end
     
     # Return the list of channels
-    def channel_names
-      today.map { |_, name, _| name }
+    def channels
+      today.map { |_, name, _| name }.sort
     end
     
-    # Return list of shows in a given channel
-    def shows(channel:, date: nil)
+    def available?(chname)
+      channels.include? chname
+    end
+    
+    # Return array with details for a given channel, by default for today date
+    # Returns: [id, channel_name, date, [ ... array_of_shows ... ]]
+    def channel_initializer_array(channel:, date: nil)
+      raise ArgumentError, "There is no channel '#{channel}'" unless available?(channel)
       date ||= @today
       year, month, day = date[0..3], date[5..6], date[8..9]
-      puts("Channel: #{channel} Year: #{year} Month: #{month} Day: #{day}") 
+      epg(year, month, day).select { |c| c[1]==channel }.first.insert(2, date)
     end
 
     # Return Object with details about a given show
